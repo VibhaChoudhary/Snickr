@@ -1,0 +1,14 @@
+RewriteEngine on
+RewriteRule (.*).snickr.com$ snickr.com/index.php
+RewriteRule ^login(.*)$ /view/login.php
+RewriteRule ^signup(.*)$ /view/signup.php
+RewriteRule ^logout(.*)$ /view/logout.php
+RewriteRule ^access_denied(.*)$ /view/access_denied.php
+RewriteRule ^verify/(.*)$ /controller/verify_email.php?token=$1
+RewriteRule ^verify(.*)$ /controller/verify_email.php
+RewriteRule ^channel-join/(.*)/$ /controller/channel-join.php?wsurl=$1
+RewriteRule ^workspace-join/(.*)/$ /controller/workspace-join.php?wsurl=$1
+RewriteRule ^workspace/(.*)/$ /view/workspace/index.php?wurl=$1@snickr.com
+RewriteRule ^workspace/(.*)/(.*)/messages$ /view/workspace/index.php?wurl=$1@snickr.com&cid=$2
+RewriteRule ^workspace/(.*)/search$ /view/workspace/search.php?wurl=$1@snickr.com&key=$2
+RewriteRule ^workspace/(.*)/search/(.*)$ /view/workspace/search.php?wurl=$1@snickr.com&key=$2
