@@ -429,9 +429,9 @@ function getMessages($cid,$wurl,$uid){
 function getChannelMessage($cid){
     global $conn;
     $query = "SELECT mid,mcontent,uname as frm,
-              DATE_FORMAT(message_ts,'%M %e %Y %T') as message_ts
+              DATE_FORMAT(message_ts,'%M %e %Y %T') as msg_ts
               FROM channel_message cm,user
-              where cm.cid=? and cm.fromuid = user.uid order by message_ts asc;";
+              where cm.cid=? and cm.fromuid = user.uid order by date(msg_ts) asc;";
     $stmt = $conn->prepare($query);
     //print_r(mysqli_error_list ($conn ));
     $stmt->bind_param('s', $cid);
@@ -453,16 +453,16 @@ function getChannelMessage($cid){
 function getDirectMessage($cid,$wurl,$uid){
     global $conn;
     $query = "select * from (SELECT dmid,dmcontent as mcontent,uname as frm,
-    DATE_FORMAT(message_ts,'%M %e %Y %T') as message_ts
+    DATE_FORMAT(message_ts,'%M %e %Y %T') as msg_ts
     FROM direct_message dm,user u,workspace ws
     where dm.wid = ws.wid and ws.wurl=? and dm.touid=? and dm.fromuid=?
     and dm.fromuid = u.uid UNION
     SELECT dmid,dmcontent as mcontent,uname as frm, 
-    DATE_FORMAT(message_ts,'%M %e %Y %T') as message_ts
+    DATE_FORMAT(message_ts,'%M %e %Y %T') as msg_ts
     FROM direct_message dm,user u,workspace ws
     where dm.wid = ws.wid and ws.wurl=? and dm.fromuid=? and dm.touid=?
     and dm.fromuid = u.uid) as combined
-    order by message_ts asc";
+    order by date(msg_ts) asc";
 
     $stmt = $conn->prepare($query);
     //print_r(mysqli_error_list ($conn ));
@@ -541,13 +541,10 @@ function createMessage($cid,$wurl,$id,$msg){
         $query = "INSERT into direct_message 
         SET wid=(SELECT wid from workspace where wurl=?), fromuid=?, touid=CAST(? AS UNSIGNED INTEGER), dmcontent=?";
         $stmt = $conn->prepare($query);
-        print_r(mysqli_error_list ($conn ));
+        //print_r(mysqli_error_list ($conn));
         $stmt->bind_param('siss',$wurl,$id,$chid,$msg);
     } 
-   
-    
     $result = $stmt->execute();
-    //echo $result;
     if($result){
         return 1 ; 
     }
@@ -769,6 +766,142 @@ function searchChannels($key,$wurl,$id){
         $stmt->close();
       
         return $res_array ; 
+    }
+    else{
+        $stmt->close();
+        return -1;
+    }   
+}
+
+function updateUser($id,$uname,$nickname,$uphone,$ujob){
+    global $conn;
+    $query = "Update user set uname=?, unickname=?, uphone=?, ujob=? where uid = ?";
+    $stmt = $conn->prepare($query);
+    print_r(mysqli_error_list ($conn));
+    $stmt->bind_param('ssssi',$uname,$nickname,$uphone,$ujob,$id);
+    $result = $stmt->execute();
+    print_r(mysqli_error_list ($conn));
+    echo $result;
+    if($result){
+        return 1 ; 
+    }
+    else{
+        $stmt->close();
+        return -1;
+    }   
+}
+
+
+function channelInvites($wurl,$uid){
+    global $conn;
+    $query = "SELECT chid,fromuid,cid,(select uname from user where fromuid=uid) as uname,cname,invite_ts
+        FROM channel_invite NATURAL JOIN CHANNEL
+        WHERE wid = (select wid from workspace where wurl=?) and touid=?  
+        AND (cid, touid) NOT IN (SELECT cid,uid FROM channel_member) and attended=0 order by invite_ts desc";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param('si', $wurl,$uid);
+    if($stmt->execute()){
+        $result = $stmt->get_result();
+        $res_array = array();
+        while ($row = $result->fetch_assoc()) {
+           $res_array[] = $row;
+        }
+        $stmt->close();
+      
+        return $res_array ; 
+    }
+    else{
+        $stmt->close();
+        return -1;
+    }   
+}
+
+function ignoreChannelInvite($id){
+    global $conn;
+    $query = "Update channel_invite set attended=1 where chid = ?";
+    $stmt = $conn->prepare($query);
+    //print_r(mysqli_error_list ($conn));
+    $stmt->bind_param('i',$id);
+    $result = $stmt->execute();
+   // print_r(mysqli_error_list ($conn));
+    echo $result;
+    if($result){
+        return 1 ; 
+    }
+    else{
+        $stmt->close();
+        return -1;
+    }   
+}
+function updatePermission($wurl,$pname,$pvalue){
+    global $conn;
+    $query = "Update workspace_permission set pallowed=? 
+    where pid = (select pid from permission where pname=?) and wid =(select wid from workspace where wurl=?)";
+    $stmt = $conn->prepare($query);
+   // print_r(mysqli_error_list ($conn));
+    $stmt->bind_param('iss',$pvalue,$pname,$wurl);
+    $result = $stmt->execute();
+    //print_r(mysqli_error_list ($conn));
+   // echo $result;
+    if($result){
+        return 1 ; 
+    }
+    else{
+        $stmt->close();
+        return -1;
+    }   
+}
+
+
+function updateWorkspace($wurl,$wname,$wpurpose){
+    global $conn;
+    $query = "Update workspace set wname=?,wpurpose=? where wurl=?";
+    $stmt = $conn->prepare($query);
+  // print_r(mysqli_error_list ($conn));
+    $stmt->bind_param('sss',$wname,$wpurpose,$wurl);
+    $result = $stmt->execute();
+    //print_r(mysqli_error_list ($conn));
+   // echo $result;
+    if($result){
+        return 1 ; 
+    }
+    else{
+        $stmt->close();
+        return -1;
+    }   
+}
+
+
+function updateFav($cid,$uid){
+    global $conn;
+    $query = "Update channel_member set cstarred=1 where cid=? and uid=?";
+    $stmt = $conn->prepare($query);
+  // print_r(mysqli_error_list ($conn));
+    $stmt->bind_param('ii',$cid,$uid);
+    $result = $stmt->execute();
+    //print_r(mysqli_error_list ($conn));
+   // echo $result;
+    if($result){
+        return 1 ; 
+    }
+    else{
+        $stmt->close();
+        return -1;
+    }   
+}
+
+function insertAdmin($wurl,$uid){
+    global $conn;
+    $query = "Insert into workspace_admin 
+    SET wid=(select wid from workspace where wurl=?),uid=? ";
+    $stmt = $conn->prepare($query);
+  // print_r(mysqli_error_list ($conn));
+    $stmt->bind_param('si',$wurl,$uid);
+    $result = $stmt->execute();
+    //print_r(mysqli_error_list ($conn));
+   // echo $result;
+    if($result){
+        return 1 ; 
     }
     else{
         $stmt->close();

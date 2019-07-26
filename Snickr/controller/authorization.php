@@ -74,6 +74,7 @@ if (isset($_POST['login-btn'])) {
     }
     $email = htmlspecialchars($_POST['email']);
     $password = htmlspecialchars($_POST['password']);
+
     $query = "SELECT * FROM user WHERE uemail=? LIMIT 1";
     $stmt = $conn->prepare($query);
     $stmt->bind_param('s', $email);

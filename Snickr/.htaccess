@@ -1,5 +1,4 @@
 RewriteEngine on
-RewriteRule (.*).snickr.com$ snickr.com/index.php
 RewriteRule ^login(.*)$ /view/login.php
 RewriteRule ^signup(.*)$ /view/signup.php
 RewriteRule ^logout(.*)$ /view/logout.php

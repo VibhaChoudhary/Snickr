@@ -50,6 +50,7 @@
     $defaults = getDefaultChannels($_GET['wurl']);    
     $favs = getFavourites($_SESSION['id']);
     $direct = getDirectChannels($_GET['wurl'],$_SESSION['id']);
+    $chinvites = channelInvites($_GET['wurl'],$_SESSION['id']);
      
 ?>
 
@@ -77,7 +78,7 @@
   <body>
    
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
-        <div class="navbar-toggler col-md-2">
+        <div id="wsinfo" class="navbar-toggler col-md-2">
             <span style="float:left" onclick="handleNav()" class="navbar-toggler-icon" ></span>
             <span  style="float:left; padding:.25rem;">
             <?php $ws=$query_array['wurl'];
@@ -98,6 +99,39 @@
         <div class="row">
             
             <!-- hidden div start -->
+            <div id ="invites" >
+            <div class="col-md-6 offset-md-3 home-wrapper">
+              <button id="message-esc" type="button" class="btn pull-right mb-4"><i class="fas fa-close" ></i>
+                </button>
+              <h4>Messages</h4>
+              <ul class="nav nav-tabs">
+                <li ><a data-toggle="tab" class="nav-link active" href="#ci">Channel Invites</a></li>
+                               
+              </ul>
+
+            <div class="tab-content">
+                
+                <div id="ci" class="tab-pane fade show active"> 
+                </br>                
+                 <?php foreach($chinvites as $chinvite){?>
+                      <div id="chin" >  
+                      <?php echo "On ".$chinvite['invite_ts'];?></br><?php echo " ".$chinvite['uname']." has invited you to join channel ";?>
+                      <a style="cursor:pointer" id="<?php echo $chinvite['cid']?>" >
+                      <?php
+                       echo $chinvite['cname'];?></a>
+                       </br>
+                       <div class="btn-group">
+                       <button name="<?php echo $chinvite['cid']?>" id="join-in">Join</button></br>
+                       <button name="<?php echo $chinvite['chid']?>" id="cancel-in">Ignore</button></br>
+                       </div>   
+                    </div>                       
+                     <?php }?>   
+                 </br>
+                </div>
+                
+            </div>
+        </div>           
+</div> 
             <div id ="settings" >
                 <div class="col-md-6 offset-md-3 home-wrapper">
               <button id="admin-esc" type="button" class="btn pull-right mb-4"><i class="fas fa-close" ></i>
@@ -112,14 +146,14 @@
                 <div id="sts" class="col md-4 tab-pane fade show active">
                     </br>
                     <h6>Workspace name</h6>
-                    <div class="input-group mt-2">                             
-                         <label id="ws-name"> <?php echo $workspace['wname'];?></label>
+                    <div class="input-group mt-2">   
+                         <input id="ws-name" type="text" value ="<?php echo $workspace['wname'];?>" disabled>
                          <button class="ml-2">Edit</button>
                     </div>
                     </br>
                     <h6>Workspace pupose</h6>
-                    <div class="input-group mt-2">                        
-                         <label id="ws-purpose"> <?php echo $workspace['wpurpose'];?></label>
+                    <div class="input-group mt-2">    
+                         <input id="ws-purpose" type="text" value ="<?php echo $workspace['wpurpose'];?>" disabled>
                          <button class="ml-2">Edit</button>
                     </div>
                     </br>
@@ -127,12 +161,33 @@
                         <?php foreach($admins as $admin){?>
                         <div class="input-group mt-2">  
                         <label id="admin-name"><?php echo $admin['uname'];?></label>
-                        <?php if($admin['uid']!=$_SESSION['id']): ?>
+                        <?php if($admin['uid']!=$workspace['wcreator']): ?>
                         <button id="remove-admin" class="ml-2">Remove</button>
                         <?php else: ?>
                         <label class="ml-2">(Creator of the workspace)</label>
                         <?php endif; ?></br></div><?php }?>
                         <a id="add-admin" href="#">+Add more admin</a>
+                        <div class="form-control form-control-lg ">
+                    <span class="to-input"></span>
+                    <div id="admin-mem-list" class="all-members">                        
+                    </div>
+                    <input autocomplete="off" id="admin-mem" class="form-control mr-2" type="text" placeholder="select members" aria-label="Search">
+                </div>
+                  <div class="mt-1 p-2">
+                    <a id="ch-admin" class="btn border border-primary">Add</a> 
+                </div>
+                        <div id="admin-member-list"  class="mt-1 mb-2 ml-4 mr-4">      
+                    <?php 
+                    $all_members=getWorkspaceMembers($query_array['wurl']);
+                    if($all_members == -1) echo "";
+                    else{
+                        foreach($all_members as $member){
+                            echo '<div style="cursor:pointer" class="border-top p-2 " id="DM'.$member['uid'].'">';
+                            echo $member['uname'];
+                            echo '</div>' ;                                 
+                        }
+                    }?>
+                </div> 
                     </br>  
                     </br>                        
                     <h6>Default Channels</h6>                        
@@ -146,9 +201,7 @@
                         <?php endif; ?></br></div><?php }?>
                         <a href="#">+Add more defaults</a>
                     </br></br>
-                    <label class="alert alert-danger"> This will delete this workspace </label>
-                    <h6>Delete Workspace</h6> 
-                    <button id="delete-ws" class="ml-2">Delete</button>
+                    <button id="save-ws" class="ml-2">Save changes</button>
                 </div>
                 <div id="pms" class="tab-pane fade ">                 
                     </br>
@@ -156,22 +209,22 @@
                     $permissions = getPermissions($_GET['wurl']);
                     foreach($permissions as $permission){
                         $a=$permission['default_allowed'];
-                        $pid=$permission['pid'];?>
+                        $pid=$permission['pid'];$pname=$permission['pname'];?>
                         <div >
                             <label class="h6 ml-2"><?php echo $permission['pdescp'];?></label></br>
-                            <div class="p-0 btn-group" id="add-pub-channel" data-toggle="buttons">
+                            <div id="permid" class="p-0 btn-group" id="add-pub-channel" data-toggle="buttons">
                                 <label class=" btn btn-default">
-                                <input type="radio" id="<?php echo $pid?>" name="<?php echo $pid?>" class="toggle" 
+                                <input value ="0" type="radio" id="<?php echo $pname?>" name="<?php echo $pname?>" class="toggle" 
                                 <?php if($a==0):?>checked<?php endif;?>>Admin only
                                 </label>  
                                 <label class=" btn btn-default ">
-                                <input type="radio" id="<?php echo $pid?>" name="<?php echo $pid?>" class="toggle"
+                                <input value="1" type="radio" id="<?php echo $pname?>" name="<?php echo $pname?>" class="toggle"
                                 <?php if($a==1):?>checked<?php endif;?>>All Members
                                 </label>
                             </div>
                         </div><?php
                     }?>
-                    <button class="ml-2">Save Changes</button>
+                    <button id="save_changes_btn" class="ml-2">Save Changes</button>
                 </div>
             </div>
         </div>           
@@ -359,6 +412,13 @@
                     </select>
                     </div>    
                 </div>
+                    <div id="new-messages" >          
+                    <a style ="cursor:pointer" class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span class="alert alert-warning alert-dismissible fade show">Invites Pending<?php echo" ("; echo count($chinvites)?>)</span>                            
+                    </a>
+                   </div>
+               
+
                 <div id="fav">
                     <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
                         <span class="text-uppercase">Favourites</span>                            
@@ -449,13 +509,16 @@
                             $user = getUserInfo(substr($chid,2));
                             echo $user['uname'];
                         } ?>
+                        <span class="h6 text-muted small" > - <?php echo $channel['cpurpose'];?></span>
                         </h5>
                         <?php
                         if(substr($chid,0,2)=='CH'){
+                            $creator = getUserInfo($channel['ccreator']);
                             echo '<h6 id="mem-count" style="font-size:.8rem;" class="card-subtitle mb-2 text-muted"><i style="padding-right:0.5rem" class="fa fa-users"></i>';
                             $cm_count=getChannelMemberCount(substr($chid,2));
                             echo "$cm_count members";
-                            echo '</h6>';
+                            echo "<span class='small text-muted pl-2'>| Created by ".$creator['uname']."
+                            on ".$channel['create_ts']."</span></h6>";
                         }
                         ?>
                      
@@ -479,8 +542,7 @@
                         <a id="leave-ch-drp" class="dropdown-item" style="cursor:pointer">Leave channel</a>
                         <a id="invite-ch-drp" class="dropdown-item" style="cursor:pointer">Invite people</a>
                         <a id="fav-ch-drp" class="dropdown-item" style="cursor:pointer">Add to Favourites</a>
-                        <a id="detail-ch-drp" class="dropdown-item" style="cursor:pointer">Channel details</a>
-                        
+                                               
                       </div>
                 </div>
                 
@@ -502,7 +564,7 @@
                            echo '<img class="d-flex rounded-circle avatar z-depth-1-half mr-3" src="/img/u1.png" alt="user-profile">';
                            echo '<a href="#"><span class="h6">';
                            if($msg['frm']==$_SESSION['id'])echo "You"; else echo $msg['frm'];
-                           echo '</span></a><span class="small px-3">'.$msg['message_ts'].'</span></a>';
+                           echo ' </span></a span class="small px-3">'.$msg['msg_ts'].'</span></a>';
                            echo '<p>'.$msg['mcontent'].'</p>'; 
                            echo '</div></div> ';
                             } 
@@ -595,9 +657,9 @@
                 $.ajax({ success: function(data){
                    $("#channel-info").load(location.href +" #channel-info>*");
                    $("#ch-pupose").load(location.href +" #ch-pupose>*");
-                $("#ch_msg").load(location.href +" #ch_msg>*");
-                
-                    //location.reload();
+                   $("#ch_msg").load(location.href +" #ch_msg>*");
+                   $("#ch_msg").load(location.href +" #ch_msg>*");
+                   $("#new-messages").load(location.href +" #new-messages>*")
                 }
                 });
             }, 5000);  
@@ -636,6 +698,7 @@
             }); 
             $("#ci-esc").click(function() {
               $("#channel-invite").hide();
+              $("#ch-mem-list span").text('');
               $('#ch-mem-list').text('');
               $('#ch-mem').text('');
             }); 
@@ -911,6 +974,19 @@
                              
                 });              
             });
+            $(document).on("click", "#fav-ch-drp", function() {
+                var cid = location.pathname.split("/")[3].substr(2);
+                $.ajax({
+                        type: "POST",
+                        data: {addfav: cid},
+                        success:function(data){
+                           
+                            refreshChat("CH"+cid);
+                                $("#channels ul").load(location.href +" #channels ul");
+                        }
+                             
+                });              
+            });
              $(document).on("click", "#admin", function() {
                $("#settings").show();
             });
@@ -944,8 +1020,121 @@
                  joinChannel(cid);
                  
             });
-            
-           
+            $(document).on("click", "#new-messages", function(e) {
+                 $('#invites').show();
+                 
+            });
+            $(document).on("click", "#message-esc", function(e) {
+                 $('#invites').hide();
+                 
+            });
+            $(document).on("click", "#join-in", function(e) {
+                var cid =  e.target.name;
+                alert(cid);
+                $.ajax({
+                        type: "POST",
+                        data: {joincid: cid},
+                        success:function(data){
+                            $("#new-messages").load(location.href +" #new-messages");
+                            $('#invites').hide();
+                        }
+                             
+                });                
+               
+                 
+            });
+            $(document).on("click", "#cancel-in", function(e) {
+                 var ignorei =  e.target.name;
+                   //alert(ignorei);
+                 $.ajax({
+                        type: "POST",
+                        data: {ignorei: ignorei},
+                        success:function(data){
+                           //alert(data);
+                           $("#new-messages").load(location.href +" #new-messages");
+                           $('#invites').hide();
+                        }
+                             
+                 }); 
+                 
+            });
+            $(document).on("click", "#chin a", function(e) {
+                 var cid =  e.target.id;
+                  var path = location.pathname.split("/");
+                 var newurl = location.origin + "/" + path[1] + "/" + path[2] + "/" + "CH" + cid + "/messages";
+                 window.location.replace(newurl); 
+                 
+                 
+            });
+            $(document).on("click", "#save_changes_btn", function(e) {
+              
+                  var add_pub_channel = $("input[name='add_pub_channel']:checked").val();
+                  var add_pvt_channel = $("input[name='add_pvt_channel']:checked").val();
+                  var archive_channel = $("input[name='archive_channel']:checked").val();
+                  var remove_pub_member = $("input[name='remove_pub_member']:checked").val();
+                  var remove_pvt_member = $("input[name='remove_pvt_member']:checked").val();
+                  var send_invite = $("input[name='send_invite']:checked").val();
+                  //alert(add_pub_channel);
+                  $.ajax({
+                      
+                        type: "POST",
+                        data: {perm:"true",add_pub_channel:add_pub_channel,add_pvt_channel:add_pvt_channel,archive_channel:archive_channel,remove_pub_member:remove_pub_member,remove_pvt_member:remove_pvt_member,send_invite:send_invite},
+                        success:function(data){
+                            //alert(data);
+                            $('#settings').hide();
+                        }
+                            
+                    });               
+                 
+            });
+            $('#sts button').click(function(){
+                 $(this).closest(".input-group").find("input").attr("disabled",false);
+             });
+             $('#save-ws').click(function(){
+                 var wnm = $("#ws-name").val();
+                 var wp = $("#ws-purpose").val();
+                 
+                 $.ajax({
+                        type: "POST",
+                        data: {wsinfo:"true",wname:wnm, wpurpose:wp},
+                        success:function(data){
+                            //alert(data);
+                            $("#wsinfo").load(" #wsinfo>*");
+                            $('#sts button').closest(".input-group").find("input").attr("disabled",true);
+                           
+                        }
+                  });   
+                
+             });
+             
+             $("#ch-admin").click(function(e){
+                e.preventDefault();
+                var memlist = $('#admin-mem-list span:even').map(function() {
+                        return $(this).prop("id");              
+                    }).get();
+                    
+                //alert(memlist);
+               
+                $.ajax({
+                    type: "POST",
+                    data: {adminlist: memlist},
+                    success:function(data){
+                        //alert(data),
+                     $("#admin-mem-list span").text('');
+                     $("#admin-mem").val('');
+                     $("#admin-mem-list").text('');}
+                                 
+                    
+                });  
+            });
+             $("#admin-member-list div").click(function(e) {
+                var uid = e.target.id;
+                $("#admin-mem").val($(this).text());
+                var getValue = $("#admin-mem").val();                
+                $('#admin-mem-list').append('<span id="'+ uid +'" class="members">'+ getValue +' <span class="cancel-member"><i class="far fa-times-circle"></i></span></span>');
+                $("#admin-mem").val('');
+                
+            });
             
         });
     </script>   

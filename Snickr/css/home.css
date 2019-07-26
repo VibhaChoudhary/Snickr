@@ -218,7 +218,7 @@ body {
 
 
 
-#browse-members,#channel-invite {
+#browse-members,#channel-invite,#invites {
   overflow-y: auto;
   position: fixed; /* Sit on top of the page content */
   display: none; /* Hidden by default */
@@ -296,7 +296,7 @@ background: #E1DAD9; /* make this whatever you want */
    
 }
 
-#workspace-invite,#settings {
+#workspace-invite,#settings,#my-account {
   overflow-y: auto;
   position: fixed; /* Sit on top of the page content */
   display: none; /* Hidden by default */
@@ -355,7 +355,7 @@ span.members {
 .enter-email-id {
     border: 0px; outline:0px;
 }
-#mem,#ch-mem {
+#mem,#ch-mem,#admin-mem {
     border: 0px; outline:0px;
 }
 

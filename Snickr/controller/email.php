@@ -86,7 +86,7 @@ function sendChannelInvitationEmail($from,$email,$wurl,$ch){
     <body>
       <div class="wrapper">
         <p>'.$from.' has invited you to join a channel in workspace'.$wurl.' Please click on Join and start collaborating</p>
-        <a href="http://snickr.com/channel-join.php?wsurl='.$wurl.',chid="CH'.$ch.'">Join Channel</a>
+        <a href="http://snickr.com/channel-join/'.$wurl.'/CH'.$ch.'/">Join Channel</a>
       </div>
     </body>
 

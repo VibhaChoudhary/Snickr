@@ -5,7 +5,7 @@
     // redirect user to login page if they're not logged in
     if (empty($_SESSION['id']))        
         header('location: /login.php');
-    
+          
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -48,31 +48,68 @@
               </div> 
                 <button id="create-ws-btn" class="btn btn-secondary" name="create-btn" class="btn btn-lg btn-block">Create</button>
                 <button id="cancel-ws-btn" class="btn btn-secondary" name="cancel-btn" class="btn btn-lg btn-block">Cancel</button>
-                
+            </div>
+        </div>
+        <div id="my-account">           
+            <div class="col-md-6 offset-md-3 home-wrapper" >
+              <h4>Account Information</h4>  
+               <div>
+                    </br>
+                    <h6>Email</h6>
+                    <div class="input-group mt-2">                        
+                         <label id="uemail"> <?php echo $user['uemail'];?></label>
+                    </div>
+                    <h6>Name</h6>
+                    <div class="input-group mt-2">                             
+                         <input id="unm" type="text" value ="<?php echo $user['uname'];?>" disabled>
+                         <button class="ml-2">Edit</button>
+                    </div>                    
+                    <h6>Nick name</h6>
+                    <div class="input-group mt-2"> 
+                         <input id="uname" type="text" value ="<?php echo $user['unickname'];?>" disabled>
+                         <button class="ml-2">Edit</button>
+                    </div>
+                    </br>
+                    <h6>Contact</h6>
+                    <div class="input-group mt-2">                        
+                         <input id="ucontact" type="text" value ="<?php echo $user['uphone'];?>" disabled>
+                         <button class="ml-2">Edit</button>
+                    </div>
+                    <h6>Job description</h6>
+                    <div class="input-group mt-2">                        
+                         <input id="ujob" type="text" value ="<?php echo $user['ujob'];?>" disabled>
+                         <button class="ml-2">Edit</button>
+                    </div>
+                    </br>                      
+                </div>
+                <button id="save-user">Save Changes</button>
+                <button id="cancel-user">Cancel</button>
             </div>
         </div>
                     
       <!--hidden div end -->
       <div class="d-flex flex-column col-md-12 flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
-          <h5 class="my-0 mr-md-auto font-weight-normal">Welcome to SnicKr</h5>      
-          <nav class="my-2 my-md-0 mr-md-3">
+          
+          <h5 class="my-0 mr-md-auto font-weight-normal">Welcome to SnicKr</h5>
+      
+          
+          <nav class="pull-right my-2 my-md-0 ">
             
-            <a class="p-2 text-dark" href="#">My Account</a>
-            <a class="p-2 text-dark" href="#">Workspaces</a>  
-            <a class="p-2 text-dark" id="create-ws" style="cursor:pointer">Create worksace</a>  
+            <a class="p-2 text-dark" id="show-account" style="cursor:pointer">My Account</a>
+            <?php if($user['uverified']): ?>
+            <a class="p-2 text-dark" id="show-ws" href="/index.php" style="cursor:pointer">Workspaces</a>  
+            <a class="p-2 text-dark" id="create-ws"  style="cursor:pointer">Create worksace</a> 
+                 <?php endif; ?>
           </nav>
-            <div>
-                <h5><?php echo $_SESSION['username']; ?></h5>
-                <a class="btn btn-outline-primary" href="logout.php">Log out</a>
+            <div id="uinfo" class=" btn-group">
+            <h6 class="mr-2 ml-4"><?php echo $user['uname']; ?></h6>
+            <a class="btn btn-outline-secondary" href="logout.php">Log out</a>
             </div>
+           
       </div>
       <div class="col-md-6 offset-md-3 home-wrapper">
         <!-- Display messages -->
-        <?php if($_SESSION['message']): ?>
-          <div class="alert alert-warning alert-dismissible fade show" role="alert">
-            <strong><?php echo $_SESSION['message']; ?></strong>
-          </div>
-        <?php endif;  ?>
+        
         <?php if (!$_SESSION['verified']): ?>
           <div class="alert alert-warning alert-dismissible fade show" role="alert">
             You need to verify your email address!
@@ -87,8 +124,9 @@
           
         <?php else:?>
         
-        <h6>Your workspaces are:</h6>
+
         <div id="ws-container">
+                    <h6 class="alert alert-warning alert-dismissible fade show">Your workspaces</h6>
              <div id="ws-list">
                 <ul class="nav flex-column mb-2">
                 <?php                
@@ -161,7 +199,7 @@
                      for (var i in emails) {
                          value = emails[i];                         
                          if(!regExp.test(value) ){ 
-                             alert(value);
+                             //alert(value);
                              valid=0;
                             $("#ws-email-invalid").show();}
                      }
@@ -175,7 +213,7 @@
                         type: "POST",
                         data: {wsname: ws, emaillist: maillist},
                         success:function(data){
-                            alert(data);
+                            //alert(data);
                             $("#ws-container").load(" #ws-list");
                             $(".enter-email-id").val('');
                             $(".ws-name").val('');
@@ -187,7 +225,33 @@
                                      
                 }        
                   
-            });   
+            }); 
+            $('#show-account').click(function(){
+               $("#my-account").show();
+            });
+             $('#my-account button').click(function(){
+                 $(this).closest(".input-group").find("input").attr("disabled",false);
+             });
+             $('#save-user').click(function(){
+                 var unm = $("#unm").val();
+                 var unc = $("#uname").val();
+                 var contact= $("#ucontact").val();
+                 var dscp= $("#ujob").val();
+                 $.ajax({
+                        type: "POST",
+                        data: {uinfo:"true", uname: unm,unick: unc, ucontact: contact,ujob: dscp},
+                        success:function(data){
+                            $("#uinfo").load(" #uinfo>*");
+                            $(this).closest(".input-group").find("input").attr("disabled",true);
+                            $("#my-account").hide();  
+                        }
+                  });   
+                
+             });
+              $('#cancel-user').click(function(){
+                 $(this).closest(".input-group").find("input").attr("disabled",true);
+                 $("#my-account").hide();  
+             });
         });
         
        

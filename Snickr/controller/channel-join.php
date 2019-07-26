@@ -11,7 +11,6 @@ if (empty($_SESSION['id'])) {
         $link .= $_SERVER['HTTP_HOST'];   
         $link .= $_SERVER['REQUEST_URI']; 
         $_SESSION['redirect_url'] = $link; 
-        //echo  $_SESSION['redirect_url'];        
         header('location: /login.php');
         exit;
 }
@@ -29,7 +28,7 @@ if(!empty($_GET['wsurl'])){
                 else
                     $newurl = "http"; 
                 $newurl .="://";
-                $ws = $_SERVER['HTTP_HOST']."/workspace/".explode('@',$wurl[0]."/CH".$cid."/messages";
+                $ws = $_SERVER['HTTP_HOST']."/workspace/".explode('@',$wurl[0])."/CH".$cid."/messages";
                 $newurl.= $ws;
                 header("Location: $newurl", true, 303);
              }
