@@ -1,10 +1,15 @@
 ## Table of contents
 * [General info](#general-info)
+* [Workspace](#workspace-page)
 * [Technologies](#technologies)
 * [Database design](#database-design)
 
+
 ## General info
 The goal is to build a web-based collaboration system similar to Slack that allows members of a team to build workspaces, create channels within these workspaces, and then communicate within these channels.
+
+## Workspace page
+![alt text](https://raw.githubusercontent.com/VibhaChoudhary/Snickr/master/workspace_page.png)
 	
 ## Technologies
 ### Web server
@@ -20,3 +25,4 @@ The goal is to build a web-based collaboration system similar to Slack that allo
 
 ## Database design
 ![alt text](https://raw.githubusercontent.com/VibhaChoudhary/Snickr/master/ERD.jpg)
+
